@@ -18,7 +18,10 @@ public static class EstudantesRotas
                 if (cpfExistente != null)
                     return Results.Conflict("O CPF informado já está cadastrado");
                 
-                Estudante novoEstudante = new(request.Nome);
+                Estudante? emailExistente = await context.Estudantes.Find(e => e.Email == request.Email).FirstOrDefaultAsync();
+                if (emailExistente != null)
+                    return Results.Conflict("O E-mail informado já está cadastrado");
+                Estudante novoEstudante = new(request.Nome, request.CPF, request.Email);
                 await context.Estudantes.InsertOneAsync(novoEstudante);
                 return Results.Created($"/estudantes/{novoEstudante.Id}", novoEstudante);
             }
@@ -35,16 +38,16 @@ public static class EstudantesRotas
             if (estudante == null)
                 return Results.NotFound();
 
-            EstudanteDto estudanteDto = new(estudante.Id, estudante.Nome, estudante.CPF);
+            EstudanteDto estudanteDto = new(estudante.Id, estudante.Nome, estudante.CPF, estudante.Email);
             return Results.Ok(estudanteDto);
         });
 
         rotasEstudantes.MapPut("{id}", async (Guid id, UpdateEstudanteRequest request, AppDbContext context) => 
         {
-            var filter = Builders<Estudante>.Filter.Eq(e => e.Id, id);
-            var update = Builders<Estudante>.Update.Set(e => e.Nome, request.Nome);
+            FilterDefinition<Estudante>? filter = Builders<Estudante>.Filter.Eq(e => e.Id, id);
+            UpdateDefinition<Estudante>? update = Builders<Estudante>.Update.Set(e => e.Nome, request.Nome);
 
-            var estudante = await context.Estudantes.Find(e => e.Id == id).FirstOrDefaultAsync();
+            Estudante? estudante = await context.Estudantes.Find(e => e.Id == id).FirstOrDefaultAsync();
 
             if (estudante == null)
                 return Results.NotFound();
@@ -56,10 +59,10 @@ public static class EstudantesRotas
 
         rotasEstudantes.MapDelete("{id}", async (Guid id, AppDbContext context) => 
         {
-            var filter = Builders<Estudante>.Filter.Eq(e => e.Id, id);
-            var update = Builders<Estudante>.Update.Set(e => e.Ativo, false);
+            FilterDefinition<Estudante>? filter = Builders<Estudante>.Filter.Eq(e => e.Id, id);
+            UpdateDefinition<Estudante>? update = Builders<Estudante>.Update.Set(e => e.Ativo, false);
 
-            var estudante = await context.Estudantes.Find(e => e.Id == id).FirstOrDefaultAsync();
+            Estudante? estudante = await context.Estudantes.Find(e => e.Id == id).FirstOrDefaultAsync();
 
             if (estudante == null)
                 return Results.NotFound();

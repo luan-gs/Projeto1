@@ -1,3 +1,3 @@
 namespace ApiCrud;
 
-public record AddEstudanteRequest(string Nome, string CPF);
+public record AddEstudanteRequest(string Nome, string CPF, string Email);
